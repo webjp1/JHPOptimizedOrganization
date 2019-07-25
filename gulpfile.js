@@ -60,6 +60,31 @@ const lessInjectIncludes = {
     quiet: true,
 }
 
+const minifyLevelOption = {
+    cleanupCharsets: true, // controls `@charset` moving to the front of a stylesheet; defaults to `true`
+    normalizeUrls: true, // controls URL normalization; defaults to `true`
+    optimizeBackground: true, // controls `background` property optimizations; defaults to `true`
+    optimizeBorderRadius: true, // controls `border-radius` property optimizations; defaults to `true`
+    optimizeFilter: true, // controls `filter` property optimizations; defaults to `true`
+    optimizeFont: true, // controls `font` property optimizations; defaults to `true`
+    optimizeFontWeight: true, // controls `font-weight` property optimizations; defaults to `true`
+    optimizeOutline: true, // controls `outline` property optimizations; defaults to `true`
+    removeEmpty: false, // controls removing empty rules and nested blocks; defaults to `true`
+    removeNegativePaddings: true, // controls removing negative paddings; defaults to `true`
+    removeQuotes: true, // controls removing quotes when unnecessary; defaults to `true`
+    removeWhitespace: true, // controls removing unused whitespace; defaults to `true`
+    replaceMultipleZeros: true, // contols removing redundant zeros; defaults to `true`
+    replaceTimeUnits: true, // controls replacing time units with shorter values; defaults to `true`
+    replaceZeroUnits: true, // controls replacing zero values with units; defaults to `true`
+    roundingPrecision: false, // rounds pixel values to `N` decimal places; `false` disables rounding; defaults to `false`
+    selectorsSortingMethod: 'standard', // denotes selector sorting method; can be `'natural'` or `'standard'`, `'none'`, or false (the last two since 4.1.0); defaults to `'standard'`
+    specialComments: 'all', // denotes a number of /*! ... */ comments preserved; defaults to `all`
+    tidyAtRules: true, // controls at-rules (e.g. `@charset`, `@import`) optimizing; defaults to `true`
+    tidyBlockScopes: true, // controls block scopes (e.g. `@media`) optimizing; defaults to `true`
+    tidySelectors: true, // controls selectors optimizing; defaults to `true`,
+    semicolonAfterLastProperty: false, // controls removing trailing semicolons in rule; defaults to `false` - means remove
+}
+
 /* Paths */
 
 const assets = `./build/assets/`;
@@ -74,14 +99,35 @@ const lessFiles = `${lessFolder}**/*.less`;
 const lessMain = `${lessFolder}main.less`;
 /* Less Paths */
 
-
-/* Messages */
-
-
-
 /* Functions */
 
 
+const beutifyPath = (filePath, filePathLength) => {
+    /* 
+        Debugging
+            for (var i = 0; i <= filePathLength; i++) { 
+                console.log(
+                    `
+                    The Position Number ${i} is: ${filePath[i]}
+                    `
+                ); 
+            }
+        Debugging
+    */
+    let beautiPath = [];
+    let bool = false;
+    let thePath = filePath;
+    let theLength = filePathLength;
+    for (var i = 0; i <= theLength; i++) {
+        if (`${thePath[i]}` == 'build') {
+            bool = true;
+        }
+        if (bool) {
+            beautiPath.push(`${filePath[i]}`);
+        }
+    }
+    return beautiPath.join('/');
+}
 const lessifyAll = () => {
     let target = gulp.src(lessFiles);
     return new Promise(function(resolve, reject) {
@@ -99,30 +145,7 @@ const lessifyAll = () => {
             .pipe(gulp.dest(cssFolder))
             .pipe(minifyCSS({
                 level: {
-                    1: {
-                        cleanupCharsets: true, // controls `@charset` moving to the front of a stylesheet; defaults to `true`
-                        normalizeUrls: true, // controls URL normalization; defaults to `true`
-                        optimizeBackground: true, // controls `background` property optimizations; defaults to `true`
-                        optimizeBorderRadius: true, // controls `border-radius` property optimizations; defaults to `true`
-                        optimizeFilter: true, // controls `filter` property optimizations; defaults to `true`
-                        optimizeFont: true, // controls `font` property optimizations; defaults to `true`
-                        optimizeFontWeight: true, // controls `font-weight` property optimizations; defaults to `true`
-                        optimizeOutline: true, // controls `outline` property optimizations; defaults to `true`
-                        removeEmpty: false, // controls removing empty rules and nested blocks; defaults to `true`
-                        removeNegativePaddings: true, // controls removing negative paddings; defaults to `true`
-                        removeQuotes: true, // controls removing quotes when unnecessary; defaults to `true`
-                        removeWhitespace: true, // controls removing unused whitespace; defaults to `true`
-                        replaceMultipleZeros: true, // contols removing redundant zeros; defaults to `true`
-                        replaceTimeUnits: true, // controls replacing time units with shorter values; defaults to `true`
-                        replaceZeroUnits: true, // controls replacing zero values with units; defaults to `true`
-                        roundingPrecision: false, // rounds pixel values to `N` decimal places; `false` disables rounding; defaults to `false`
-                        selectorsSortingMethod: 'standard', // denotes selector sorting method; can be `'natural'` or `'standard'`, `'none'`, or false (the last two since 4.1.0); defaults to `'standard'`
-                        specialComments: 'all', // denotes a number of /*! ... */ comments preserved; defaults to `all`
-                        tidyAtRules: true, // controls at-rules (e.g. `@charset`, `@import`) optimizing; defaults to `true`
-                        tidyBlockScopes: true, // controls block scopes (e.g. `@media`) optimizing; defaults to `true`
-                        tidySelectors: true, // controls selectors optimizing; defaults to `true`,
-                        semicolonAfterLastProperty: false, // controls removing trailing semicolons in rule; defaults to `false` - means remove
-                    }
+                    1: minifyLevelOption
                 }
             }))
             .on('error', reject)
@@ -135,6 +158,43 @@ const lessifyAll = () => {
     }).then(function() {
         // Resolve
         gutil.log(gutil.colors.green(`All Less Files Have Been Compiled`));
+    }).catch(function(err) {
+        gutil.log(gutil.colors.red(`Error: ${err}`));
+    });
+}
+const lessifyOne = (file) => {
+    let target = gulp.src(file);
+    let filePath = file.split('\\');;
+    let filePathLength = filePath.length - 1;
+    let pathToPrint = beutifyPath(filePath, filePathLength);
+    return new Promise(function(resolve, reject) {
+        target
+            .pipe(sourcemaps.init())
+            .on('error', reject)
+            .pipe(less({
+                paths: [file],
+            }))
+            .on('error', reject)
+            .pipe(prefix({
+                browsers: ['last 99 versions']
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(cssFolder))
+            .pipe(minifyCSS({
+                level: {
+                    1: minifyLevelOption
+                }
+            }))
+            .on('error', reject)
+            .pipe(rename({ extname: '.min.css' }))
+            .on('error', reject)
+            .pipe(sourcemaps.write('./'))
+            .on('error', reject)
+            .pipe(gulp.dest(cssFolder))
+            .on('end', resolve)
+    }).then(function() {
+        // Resolve
+        gutil.log(gutil.colors.green(`The File ${pathToPrint} Have Been Compiled`));
     }).catch(function(err) {
         gutil.log(gutil.colors.red(`Error: ${err}`));
     });
@@ -208,30 +268,10 @@ const lessInjectOne = (file) => {
     let toInject = gulp.src(file, { read: false });
     let filePath = file.split('\\');
     let filePathLength = filePath.length - 1;
-    let pathToPrint = [];
+    let pathToPrint = beutifyPath(filePath, filePathLength);
     let bool = false;
     let injectionOptions;
     let type;
-    for (var i = 0; i <= filePathLength; i++) {
-        if (`${filePath[i]}` == 'build') {
-            bool = true;
-        }
-        if (bool) {
-            pathToPrint.push(`${filePath[i]}`);
-        }
-    }
-    pathToPrint = pathToPrint.join('/');
-    /* 
-        Debugging
-            for (var i = 0; i <= filePathLength; i++) { 
-                console.log(
-                    `
-                    The Position Number ${i} is: ${filePath[i]}
-                    `
-                ); 
-            }
-        Debugging
-    */
     switch (filePath[filePathLength - 1]) {
         case "includes":
             injectionOptions = {
@@ -295,6 +335,7 @@ const lessInjectOne = (file) => {
         function() {
             // Resolved
             gutil.log(gutil.colors.green(`A New '${type}' Less File Have Been Injected: ./${pathToPrint}`));
+            lessifyOne(file);
         }).catch(function(err) {
         gutil.log(gutil.colors.red(`An Error Occured While Injecting New '${type}' Less File : ./${pathToPrint}`));
         gutil.log(gutil.colors.red(`Error: ${err}`));
