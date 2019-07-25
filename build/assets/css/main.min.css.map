@@ -1,0 +1,1 @@
+{"version":3,"sources":["standard.less","main.css"],"names":[],"mappings":"AAAA,ECEE","file":"main.min.css","sourcesContent":["*{\r\n    /*! box-sizing: border-box; */\r\n}","/* Globals */\n* {\n  /*! box-sizing: border-box; */\n}\n/* EndGlobals */\n/* Includes */\n/* EndIncludes */\n/* Partials */\n/* EndPartials */\n/* Pages */\n/* EndPages */\n"]}
