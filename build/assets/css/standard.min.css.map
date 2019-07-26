@@ -1,1 +1,1 @@
-{"version":3,"sources":["standard.less","standard.css"],"names":[],"mappings":"AAAA,ECCE","file":"standard.min.css","sourcesContent":["*{\r\n    /*! box-sizing: border-box; */\r\n}","* {\n  /*! box-sizing: border-box; */\n}\n"]}
+{"version":3,"sources":["standard.less"],"names":[],"mappings":"AAAA,EACI,mBAAA,WAAA,gBAAA,WAAA,WAAA","file":"standard.min.css","sourcesContent":["*{\r\n    box-sizing: border-box;\r\n}"]}
