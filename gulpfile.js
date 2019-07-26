@@ -16,7 +16,13 @@ const watch = require('gulp-watch');
 const prefix = require('gulp-autoprefixer');
 const minifyCSS = require('gulp-clean-css');
 const sourcemaps = require('gulp-sourcemaps');
-const gulpimagemin = require('gulp-imagemin');
+const gimagemin = require('gulp-imagemin');
+const pngquant = require('imagemin-pngquant');
+const mozjpeg = require('imagemin-mozjpeg');
+const svgo = require('imagemin-svgo');
+const webp = require('imagemin-webp');
+const gifsicle = require('imagemin-gifsicle');
+const responsive = require('gulp-responsive');
 const ts = require('gulp-typescript');
 const inject = require('gulp-inject');
 const rename = require('gulp-rename');
@@ -101,7 +107,11 @@ const lessGlobals = [`${lessFolder}/*.less`, `!${lessFolder}/main.less`];
 const lessFiles = `${lessFolder}**/*.less`;
 const lessMain = `${lessFolder}main.less`;
 /* Less Paths */
-
+const imagesFolder = `${assets}images/`
+const imagesFiles = `${imagesFolder}*.{jpg,jpeg,png,JPG,PNG,gif,GIF}`;
+const compressedImagesFolder = `${imagesFolder}compressed/`;
+const jpgsAndPngs = `${compressedImagesFolder}*.{jpg,jpeg,png,JPG,PNG}`;
+const webpImagesFolder = `${compressedImagesFolder}webp/`;
 /* Functions */
 
 const cleanMain = () => {
@@ -416,19 +426,8 @@ const lessInjectOne = (file) => {
     });
 }
 
-/* Tasks */
-
-gulp.task('default', function(done) {
-    cleanMain();
-    done();
-});
-
-gulp.task('less', function(done) {
-    lessInjectAll();
-    done();
-});
-gulp.task('watch-less', function(done) {
-    gulp.src(lessFiles)
+const watchLess = () => {
+    return gulp.src(lessFiles)
         .pipe(watch(lessFiles)).on('add', function(filePath) {
             let dividedPath = filePath.split('\\');
             let toPrint = beutifyPath(dividedPath, (dividedPath.length - 1));
@@ -447,4 +446,78 @@ gulp.task('watch-less', function(done) {
             gutil.log(gutil.colors.red(`Less File Deleted : ${toPrint}`));
             lessKillTheSons(filePath);
         })
+}
+
+const imageResizing = (percentage) => {
+    let target = gulp.src(jpgsAndPngs);
+    return new Promise(function(resolve, reject) {
+        target
+            .pipe(responsive({
+                '*.jpg': { width: `${percentage}%` },
+                '*.png': { width: `${percentage}%` }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-${percentage}`))
+            .on('end', resolve);
+    }).then(function() {
+        gutil.log(gutil.colors.blue(`Images have Been Resized to a ${percentage}% of there width.`));
+    }).catch(function(err) {
+        gutil.log(gutil.colors.red(`Error on the Image Resizing: ${err}`));
+    });
+}
+
+const compressImages = () => {
+    return new Promise(function(resolve, reject) {
+        let target = gulp.src(imagesFiles);
+        target
+            .pipe(gimagemin([
+                pngquant({
+                    quality: [0.6, 0.8],
+                    verbose: true
+                }),
+                mozjpeg({
+                    quality: 80,
+                    progressive: true,
+                }),
+                gifsicle({
+                    optimizationLevel: 3,
+                }),
+            ], {
+                verbose: true,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(compressedImagesFolder))
+            .on('end', resolve);
+    }).then(function() {
+        imageResizing(40);
+        gutil.log(gutil.colors.blue(`Images have Been Compressed`));
+    }).catch(function(err) {
+        gutil.log(gutil.colors.red(`Error on the Image Compression: ${err}`));
+    });
+}
+
+/* Tasks */
+
+gulp.task('default', function(done) {
+    lessInjectAll();
+    cleanMain();
+    compressImages();
+    done();
+});
+gulp.task('watch', function(done) {
+    watchLess();
+    done();
+});
+gulp.task('less', function(done) {
+    lessInjectAll();
+    done();
+});
+gulp.task('watch-less', function(done) {
+    watchLess();
+    done();
 });
