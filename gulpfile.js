@@ -20,7 +20,7 @@ const gimagemin = require('gulp-imagemin');
 const pngquant = require('imagemin-pngquant');
 const mozjpeg = require('imagemin-mozjpeg');
 const svgo = require('imagemin-svgo');
-const webp = require('imagemin-webp');
+const webp = require('gulp-webp');
 const gifsicle = require('imagemin-gifsicle');
 const responsive = require('gulp-responsive');
 const ts = require('gulp-typescript');
@@ -29,6 +29,7 @@ const rename = require('gulp-rename');
 const del = require('promised-del');
 const injectString = require('gulp-inject-string');
 const removeEmptyLines = require('gulp-remove-empty-lines');
+const glob = require('glob');
 
 /* Objects */
 
@@ -106,13 +107,32 @@ const lessPartials = `${lessFolder}/partials/*.less`;
 const lessGlobals = [`${lessFolder}/*.less`, `!${lessFolder}/main.less`];
 const lessFiles = `${lessFolder}**/*.less`;
 const lessMain = `${lessFolder}main.less`;
-/* Less Paths */
+/* Images Paths */
 const imagesFolder = `${assets}images/`
 const imagesFiles = `${imagesFolder}*.{jpg,jpeg,png,JPG,PNG,gif,GIF}`;
 const compressedImagesFolder = `${imagesFolder}compressed/`;
 const jpgsAndPngs = `${compressedImagesFolder}*.{jpg,jpeg,png,JPG,PNG}`;
-const webpImagesFolder = `${compressedImagesFolder}webp/`;
+
+
 /* Functions */
+
+const toWebp = () => {
+    return new Promise(function(resolve, reject) {
+        let target = gulp.src(`${compressedImagesFolder}**/*.{jpg,jpeg,png,JPG,PNG}`);
+        gutil.log(gutil.colors.blue(`Starting Image To Webp Conversion`));
+        target
+            .pipe(webp())
+            .on('error', reject)
+            .pipe(gulp.dest(compressedImagesFolder))
+            .on('end', resolve)
+    }).then(function() {
+        // Resolve
+        gutil.log(gutil.colors.green(`Images Have Been Turned into Webp.`));
+    }).catch(function(err) {
+        //Reject
+        gutil.log(gutil.colors.red(`Error in Webp Transformation : ${err}`));
+    });
+}
 
 const cleanMain = () => {
     return new Promise(function(resolve, reject) {
@@ -448,13 +468,14 @@ const watchLess = () => {
         })
 }
 
-const imageResizing = (percentage) => {
-    let target = gulp.src(jpgsAndPngs);
+const imageResizing = () => {
+    let pathToUse = jpgsAndPngs;
+    let target = gulp.src(pathToUse);
+    let fileArray = glob.sync(pathToUse);
     return new Promise(function(resolve, reject) {
-        target
-            .pipe(responsive({
-                '*.jpg': { width: `${percentage}%` },
-                '*.png': { width: `${percentage}%` }
+        target.pipe(responsive({
+                '*.jpg': { width: '5%', },
+                '*.png': { width: '5%' }
             }, {
                 quality: 80,
                 progressive: true,
@@ -462,10 +483,198 @@ const imageResizing = (percentage) => {
                 withMetadata: false,
             }))
             .on('error', reject)
-            .pipe(gulp.dest(`${compressedImagesFolder}size-${percentage}`))
+            .pipe(gulp.dest(`${compressedImagesFolder}size-5`))
+        target.pipe(responsive({
+                '*.jpg': { width: '10%' },
+                '*.png': { width: '10%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-10`))
+        target.pipe(responsive({
+                '*.jpg': { width: '15%' },
+                '*.png': { width: '15%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-15`))
+        target.pipe(responsive({
+                '*.jpg': { width: '20%' },
+                '*.png': { width: '20%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-20`))
+        target.pipe(responsive({
+                '*.jpg': { width: '25%' },
+                '*.png': { width: '25%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-25`))
+        target.pipe(responsive({
+                '*.jpg': { width: '30%' },
+                '*.png': { width: '30%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-30`))
+        target.pipe(responsive({
+                '*.jpg': { width: '35%' },
+                '*.png': { width: '35%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-35`))
+        target.pipe(responsive({
+                '*.jpg': { width: '40%' },
+                '*.png': { width: '40%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-40`))
+        target.pipe(responsive({
+                '*.jpg': { width: '45%' },
+                '*.png': { width: '45%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-45`))
+        target.pipe(responsive({
+                '*.jpg': { width: '50%' },
+                '*.png': { width: '50%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-50`))
+        target.pipe(responsive({
+                '*.jpg': { width: '55%' },
+                '*.png': { width: '55%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-55`))
+        target.pipe(responsive({
+                '*.jpg': { width: '60%' },
+                '*.png': { width: '60%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-60`))
+        target.pipe(responsive({
+                '*.jpg': { width: '65%' },
+                '*.png': { width: '65%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-65`))
+        target.pipe(responsive({
+                '*.jpg': { width: '70%' },
+                '*.png': { width: '70%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-70`))
+        target.pipe(responsive({
+                '*.jpg': { width: '75%' },
+                '*.png': { width: '75%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-75`))
+        target.pipe(responsive({
+                '*.jpg': { width: '80%' },
+                '*.png': { width: '80%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-80`))
+        target.pipe(responsive({
+                '*.jpg': { width: '85%' },
+                '*.png': { width: '85%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-85`))
+        target.pipe(responsive({
+                '*.jpg': { width: '90%' },
+                '*.png': { width: '90%' }
+            }, {
+                quality: 80,
+                progressive: true,
+                compressionLevel: 6,
+                withMetadata: false,
+            }))
+            .on('error', reject)
+            .pipe(gulp.dest(`${compressedImagesFolder}size-90`))
             .on('end', resolve);
     }).then(function() {
-        gutil.log(gutil.colors.blue(`Images have Been Resized to a ${percentage}% of there width.`));
+        toWebp();
+        gutil.log(gutil.colors.blue(`Images have Been Resized To Intervals of 5% of there width.`));
     }).catch(function(err) {
         gutil.log(gutil.colors.red(`Error on the Image Resizing: ${err}`));
     });
@@ -473,7 +682,13 @@ const imageResizing = (percentage) => {
 
 const compressImages = () => {
     return new Promise(function(resolve, reject) {
-        let target = gulp.src(imagesFiles);
+        let pathToUse = imagesFiles;
+        let target = gulp.src(pathToUse, { allowEmpty: false });
+        let fileArray = glob.sync(pathToUse);
+        let fileArrayLength = fileArray.length;
+        if (fileArrayLength == 0) {
+            reject('No Images To Compress');
+        }
         target
             .pipe(gimagemin([
                 pngquant({
@@ -494,7 +709,7 @@ const compressImages = () => {
             .pipe(gulp.dest(compressedImagesFolder))
             .on('end', resolve);
     }).then(function() {
-        imageResizing(40);
+        imageResizing();
         gutil.log(gutil.colors.blue(`Images have Been Compressed`));
     }).catch(function(err) {
         gutil.log(gutil.colors.red(`Error on the Image Compression: ${err}`));
