@@ -30,7 +30,9 @@ const del = require('promised-del');
 const injectString = require('gulp-inject-string');
 const removeEmptyLines = require('gulp-remove-empty-lines');
 const glob = require('glob');
-
+const sizeOf = require('image-size');
+const file = require('gulp-file');
+const fs = require('fs');
 /* Objects */
 
 const lessInjectGlobals = {
@@ -116,17 +118,98 @@ const jpgsAndPngs = `${compressedImagesFolder}*.{jpg,jpeg,png,JPG,PNG}`;
 
 /* Functions */
 
+const buildPictureTag = (fileArray) => {
+    return new Promise(function(resolve, reject) {
+        let ArrayLength = fileArray.length - 1;
+        let cookedImageArray = [];
+        let counter = 0;
+        let sources = [];
+        for (counter = 0; counter <= ArrayLength; counter++) {
+            let ActualImage = fileArray[counter];
+            let actualImageNameArray = ActualImage.split('/');
+            let actualImageName = actualImageNameArray[actualImageNameArray.length - 1];
+            let actualImageNameNoExtArray = actualImageName.split('.');
+            let actualImageNameNoExt = actualImageNameNoExtArray[0];
+            let actualImageExt = actualImageNameNoExtArray[1];
+            let actualImageWebpName = `${actualImageNameNoExt}.webp`;
+            cookedImageArray.push(actualImageName);
+            cookedImageArray.push(actualImageWebpName);
+            let originalImageSize = getImageSize(`${ActualImage}`);
+            let mainSourceWebp = `<source media="(min-width: ${originalImageSize.width}px)" srcset="${compressedImagesFolder.replace('/build','')}${actualImageWebpName}" type="image/webp">`;
+            let mainSource = `<source media="(min-width: ${originalImageSize.width}px)" srcset="${compressedImagesFolder.replace('/build','')}${actualImageName}" type="image/${actualImageExt}">`;
+            sources.push(mainSourceWebp);
+            sources.push(mainSource);
+            let secondCounter = 90;
+            for (secondCounter = 90; secondCounter >= 5; secondCounter -= 5) {
+                let folderToLookAt = `${compressedImagesFolder}size-${secondCounter}/`;
+                let imageSize;
+                if (actualImageExt.toLowerCase() != 'png') {
+                    ImageSize = getImageSize(`${folderToLookAt}${actualImageNameNoExt}.jpeg`);
+                } else {
+                    ImageSize = getImageSize(`${folderToLookAt}${actualImageName}`);
+                }
+                let sizedSourceWebp = ` <source media="(min-width: ${ImageSize.width}px)" srcset="${folderToLookAt.replace('/build','')}${actualImageWebpName}" type="image/webp">`;
+                let sizedSource;
+                if (actualImageExt.toLowerCase() != 'png') {
+                    sizedSource = ` <source media="(min-width: ${ImageSize.width}px)" srcset="${folderToLookAt.replace('/build','')}${actualImageName}" type="image/jpeg">`;
+                } else {
+                    sizedSource = ` <source media="(min-width: ${ImageSize.width}px)" srcset="${folderToLookAt.replace('/build','')}${actualImageName}" type="image/${actualImageExt}">`;
+                }
+                sources.push(sizedSourceWebp);
+                sources.push(sizedSource);
+            }
+            let realSourceTags = sources.join("\r\n\t\t");
+            let realImgTag = `<img src="${compressedImagesFolder.replace('/build','')}${actualImageName}" alt="{{ Add Your Alt Text Here }}" title="{{ Add Your Title Text Here }}" />`;
+            let pictureTag =
+                `
+                <picture>
+                    ${realSourceTags}
+                    ${realImgTag}
+                </picture>
+            `;
+            fs.writeFile(`${imagesFolder}exampleFiles/${actualImageNameNoExt}.html`, `${pictureTag}`, function(err) {
+                if (err) {
+                    gutil.log(gutil.colors.red(`Error Creating Example File For Image ${actualImageName}: ${err}`));
+                } else {
+                    gutil.log(gutil.colors.green(`Image Example File for ${actualImageName} Created`));
+                }
+            });
+            sources = [];
+        }
+        resolve;
+    }).then(function() {
+        // Resolve
+        gutil.log(gutil.colors.green(`Images Pictures Examples have Been Created`));
+    }).catch(function(err) {
+        // Reject
+        gutil.log(gutil.colors.red(`Error in Picture Tag Build : ${err}`));
+    });
+}
+const getImageSize = (imagePath) => {
+    let size = sizeOf(imagePath);
+    /*sizeOf(imagePath, function(err, dimensions) {
+        if (err) {
+            gutil.log(gutil.colors.red(`Error in Picture Tag Build : ${err}`));
+        }
+        size = dimensions.width;
+    });*/
+    return size;
+}
 const toWebp = () => {
     return new Promise(function(resolve, reject) {
-        let target = gulp.src(`${compressedImagesFolder}**/*.{jpg,jpeg,png,JPG,PNG}`);
+        let pathToUse = `${compressedImagesFolder}**/*.{jpg,jpeg,png,JPG,PNG}`;
+        let mainPath = `${compressedImagesFolder}*.{jpg,jpeg,png,JPG,PNG}`;
+        let target = gulp.src(pathToUse);
+        let fileArray = glob.sync(mainPath);
         gutil.log(gutil.colors.blue(`Starting Image To Webp Conversion`));
         target
             .pipe(webp())
             .on('error', reject)
             .pipe(gulp.dest(compressedImagesFolder))
-            .on('end', resolve)
-    }).then(function() {
+            .on('end', resolve(fileArray))
+    }).then(function(fileArray) {
         // Resolve
+        buildPictureTag(fileArray);
         gutil.log(gutil.colors.green(`Images Have Been Turned into Webp.`));
     }).catch(function(err) {
         //Reject
@@ -693,7 +776,7 @@ const compressImages = () => {
             .pipe(gimagemin([
                 pngquant({
                     quality: [0.6, 0.8],
-                    verbose: true
+                    verbose: false
                 }),
                 mozjpeg({
                     quality: 80,
@@ -703,7 +786,7 @@ const compressImages = () => {
                     optimizationLevel: 3,
                 }),
             ], {
-                verbose: true,
+                verbose: false,
             }))
             .on('error', reject)
             .pipe(gulp.dest(compressedImagesFolder))
